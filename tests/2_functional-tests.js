@@ -9,6 +9,7 @@
 var chaiHttp = require('chai-http');
 var chai = require('chai');
 var assert = chai.assert;
+var expect = chai.expect;
 var server = require('../server');
 
 chai.use(chaiHttp);
@@ -18,7 +19,21 @@ suite('Functional Tests', function() {
   suite('API ROUTING FOR /api/threads/:board', function() {
     
     suite('POST', function() {
-      
+      test('create thread',(done)=>{
+        var board = 'test';
+        chai.request(server)
+        .post(`/api/threads/${board}`)
+        .type('form')
+        .send({
+          text:"This is a test",
+          delete_password:"test_pass",
+          board:board})
+        .end((err,res) => {
+          assert.equal(res.status,200)
+          assert.match(res.redirects,RegExp(`/b/${board}`))
+          done();
+        })
+      }) 
     });
     
     suite('GET', function() {
