@@ -17,7 +17,43 @@ chai.use(chaiHttp);
 suite('Functional Tests', function () {
 
   suite('API ROUTING FOR /api/threads/:board', function () {
+
+    this.timeout(5000);
     let boardName = `test${Date.now()}`
+
+    let threadsToSend = 12;
+    let timeBoardPostedTo = `timedboard`
+    let sendAndWait = (board,serverToSendTo,count,next,finish)=>{
+      chai.request(serverToSendTo)
+      .post(`/api/threads/${board}`)
+      .type('form')
+      .send({
+        text: "This is a test " + count,
+        delete_password: "test_pass",
+        board: board
+      })
+      .end((err,res)=>{
+        
+          setTimeout(()=>{
+            if(count===0){
+              console.log("done")
+              finish()
+            }
+            else{
+              console.log(`${count} - ${board}`)
+              console.log(res.body)
+            next(board,serverToSendTo,count-1,next,finish)
+            }
+          },100)
+          
+       
+      })
+    }
+
+    suiteSetup((done)=>{
+      sendAndWait(timeBoardPostedTo,server,threadsToSend,sendAndWait,done)
+    });
+
     suite('POST', function () {
       test('create thread', (done) => {
         chai.request(server)
@@ -39,13 +75,14 @@ suite('Functional Tests', function () {
     suite('GET', function () {
       test('visiting a board page', (done) => {
         chai.request(server)
-          .get(`/api/threads/${boardName}`)
+          .get(`/api/threads/${timeBoardPostedTo}`)
           .end((err, res) => {
+            let threads = res.body
             assert.equal(res.status, 200)
-            assert.isArray(res.body)
-            assert.equal(res.body.length, 1)
-            assert.property(res.body[0], 'text')
-            assert.equal(res.body[0].text, 'This is a test')
+            assert.equal(threads.length,10)
+            
+            //!need to test if threads are in desc order
+            //!check if replies are the latest
             done()
           })
       })
@@ -61,9 +98,7 @@ suite('Functional Tests', function () {
         chai.request(server)
           .get(`/api/threads/${boardName}`)
           .end((err, res) => {
-            let threadToReport = res.body[0]
-            assert.equal(threadToReport.reported,false)
-            //console.log("thread",threadToReport)
+            let threadToReport = res.body[0]            //console.log("thread",threadToReport)
           
             chai.request(server)
             .put(`/api/threads/${boardName}`)
