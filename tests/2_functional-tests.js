@@ -23,35 +23,34 @@ suite('Functional Tests', function () {
 
     let threadsToSend = 12;
     let timeBoardPostedTo = `timedboard`
-    let sendAndWait = (board,serverToSendTo,count,next,finish)=>{
+    let sendAndWait = (board, serverToSendTo, count, next, finish) => {
       chai.request(serverToSendTo)
-      .post(`/api/threads/${board}`)
-      .type('form')
-      .send({
-        text: "This is a test " + count,
-        delete_password: "test_pass",
-        board: board
-      })
-      .end((err,res)=>{
-        
-          setTimeout(()=>{
-            if(count===0){
+        .post(`/api/threads/${board}`)
+        .type('form')
+        .send({
+          text: "This is a test " + count,
+          delete_password: "test_pass",
+          board: board
+        })
+        .end((err, res) => {
+
+          setTimeout(() => {
+            if (count === 0) {
               console.log("done")
               finish()
-            }
-            else{
+            } else {
               console.log(`${count} - ${board}`)
               console.log(res.body)
-            next(board,serverToSendTo,count-1,next,finish)
+              next(board, serverToSendTo, count - 1, next, finish)
             }
-          },100)
-          
-       
-      })
+          }, 100)
+
+
+        })
     }
 
-    suiteSetup((done)=>{
-      sendAndWait(timeBoardPostedTo,server,threadsToSend,sendAndWait,done)
+    suiteSetup((done) => {
+      sendAndWait(timeBoardPostedTo, server, threadsToSend, sendAndWait, done)
     });
 
     suite('POST', function () {
@@ -79,8 +78,8 @@ suite('Functional Tests', function () {
           .end((err, res) => {
             let threads = res.body
             assert.equal(res.status, 200)
-            assert.equal(threads.length,10)
-            
+            assert.equal(threads.length, 10)
+
             //!need to test if threads are in desc order
             //!check if replies are the latest
             done()
@@ -90,7 +89,52 @@ suite('Functional Tests', function () {
     });
 
     suite('DELETE', function () {
+      let threadToDelete = `trash${Date.now()}`;
+      let save_id;
+      suiteSetup((done) => {
+        chai.request(server)
+          .post(`/api/threads/${threadToDelete}`)
+          .type('form')
+          .send({
+            text: "Delete this after creation",
+            delete_password: "test_pass",
+            board: threadToDelete
+          })
+          .end((err, res) => {
+            chai.request(server)
+              .get(`/api/threads/${threadToDelete}`)
+              .end((get_err, get_res) => {
+                save_id = get_res.body[0]._id;
+                done()
+                //console.log(get_res.body[0],save_id)
+              })
+          })
+      })
+      test('delete thread with matching password', (done) => {
+        //console.log(save_id)
 
+        chai.request(server)
+        .delete(`/api/threads/${threadToDelete}`)
+        .send({
+          thread_id: save_id,
+          delete_password: "wrong_pass"
+        })
+        .end((err, res) => {
+          //console.log(res.body)
+          assert.equal(res.body,"incorrect password")
+          chai.request(server)
+          .delete(`/api/threads/${threadToDelete}`)
+          .send({
+            thread_id: save_id,
+            delete_password: "test_pass"
+          })
+          .end((err, res) => {
+            //console.log(res.body)
+            assert.equal(res.body,"success")
+            done()
+          })
+        })
+      })
     });
 
     suite('PUT', function () {
@@ -98,39 +142,41 @@ suite('Functional Tests', function () {
         chai.request(server)
           .get(`/api/threads/${boardName}`)
           .end((err, res) => {
-            let threadToReport = res.body[0]            //console.log("thread",threadToReport)
-          
+            let threadToReport = res.body[0] //console.log("thread",threadToReport)
+
             chai.request(server)
-            .put(`/api/threads/${boardName}`)
-            .send({reported_id:threadToReport._id})
-            .end((put_err, put_res) => {
-              assert.equal(put_res.status,200)
-              assert.equal(put_res.body,"success");
-              done();
-            })
+              .put(`/api/threads/${boardName}`)
+              .send({
+                reported_id: threadToReport._id
+              })
+              .end((put_err, put_res) => {
+                assert.equal(put_res.status, 200)
+                assert.equal(put_res.body, "success");
+                done();
+              })
           });
       })
     })
-});
+  });
 
-suite('API ROUTING FOR /api/replies/:board', function () {
+  suite('API ROUTING FOR /api/replies/:board', function () {
 
-suite('POST', function () {
+    suite('POST', function () {
 
-});
+    });
 
-suite('GET', function () {
+    suite('GET', function () {
 
-});
+    });
 
-suite('PUT', function () {
+    suite('PUT', function () {
 
-});
+    });
 
-suite('DELETE', function () {
+    suite('DELETE', function () {
 
-});
+    });
 
-});
+  });
 
 });
