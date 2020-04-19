@@ -16,7 +16,7 @@
     
     <div id='submitNewThread'>
       <h3>Submit a new thread:</h3>
-      <form id="newThread" method="post" action="/api/">
+      <form id="newThread" method="post" action="/api/threads/">
         <textarea rows="8" cols="120" type='text' placeholder='Thread text...' name='text' required=''></textarea><br>
         <input type='text' placeholder='password to delete' name='delete_password' required=''><br>
         <input type="submit" value="Submit">
@@ -32,7 +32,8 @@
             crossorigin="anonymous"></script>
     <script>
       $(function() {
-        var currentBoard = window.location.pathname.slice(3,-1);
+        var currentBoard = window.location.pathname.replace(/^\/b\//,"");
+        console.log(currentBoard)
         var url = "/api/threads/"+currentBoard;
         $('#boardTitle').text('Welcome to '+window.location.pathname)
         $.ajax({

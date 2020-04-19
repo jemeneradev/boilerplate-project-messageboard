@@ -25,17 +25,19 @@ module.exports = function (app) {
       let delete_password = req.body.delete_password;
       let board_from_form = req.body.board; //form input convenience, check first
       
-      //console.log(`param: ${board_from_params}`)
-      //console.log(`form : ${text}, ${delete_password},${board_from_form}`)
+      console.log(`param: ${board_from_params}`)
+      console.log(`form : ${text}, ${delete_password},${board_from_form}`)
       //console.log(/^\s+$/.test(text))
       
       if (  ((board_from_params !== undefined && /^\s+$/.test(board_from_params) === false) ||
               (board_from_form !== undefined && /^\s+$/.test(board_from_form) === false)) &&
             (text !== undefined && /^\s+$/.test(text) === false) &&
             (delete_password !== undefined && /^\s+$/.test(delete_password) === false)) {
-              
+            
+        let board_name = board_from_params || board_from_form;
+        console.log(board_name)
         Thread.create({
-          board: board_from_params || board_from_form, //check if they are . equal
+          board: board_name, //check if they are . equal
           text: text,
           delete_password:delete_password
         },(err,threadCreated)=>{
@@ -56,6 +58,17 @@ module.exports = function (app) {
         //res.status(200).json("missing info")
       }
 
+    })
+    .get((req,res)=>{
+      Thread.find({board:req.params.board},(err,threadsFound)=>{
+        res.status(200).json(threadsFound)
+      })
+    })
+    .put((req,res)=>{
+      //console.log(req.body)
+      Thread.updateOne({_id:req.body.reported_id},{reported:true},(err,threadReported)=>{
+          res.status(200).json("success");
+      });
     });
 
   app.route('/api/replies/:board');
