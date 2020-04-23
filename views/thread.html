@@ -24,7 +24,7 @@
             crossorigin="anonymous"></script>
     <script>
       $(function() {
-        var currentURL = window.location.pathname.slice(3);
+        var currentURL = window.location.pathname.replace(/^\/b\//,"");
         currentURL = currentURL.split('/');
         
         var url = "/api/replies/"+currentURL[0];

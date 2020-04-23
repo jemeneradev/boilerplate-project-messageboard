@@ -15,7 +15,7 @@ var server = require('../server');
 chai.use(chaiHttp);
 
 suite('Functional Tests', function () {
-
+  /*
   suite('API ROUTING FOR /api/threads/:board', function () {
 
     this.timeout(5000);
@@ -36,11 +36,11 @@ suite('Functional Tests', function () {
 
           setTimeout(() => {
             if (count === 0) {
-              console.log("done")
+              //console.log("done")
               finish()
             } else {
-              console.log(`${count} - ${board}`)
-              console.log(res.body)
+              //console.log(`${count} - ${board}`)
+              //console.log(res.body)
               next(board, serverToSendTo, count - 1, next, finish)
             }
           }, 100)
@@ -159,10 +159,68 @@ suite('Functional Tests', function () {
     })
   });
 
+  */
+
   suite('API ROUTING FOR /api/replies/:board', function () {
+    let boardTestingReplies = `boardWithReplies${Date.now()}`
+    suiteSetup((done) => {
+      chai.request(server)
+        .post(`/api/threads/${boardTestingReplies}`)
+        .type('form')
+        .send({
+          text: "This is a test",
+          delete_password: "test_pass",
+          board: boardTestingReplies
+        })
+        .end((err, res) => {
+          console.log(res.body)
+          console.log(`Created thread to test replies: ${boardTestingReplies}`)
+          done();
+        })
+    })
 
     suite('POST', function () {
-
+      let replies;
+      let thread_id;
+      suiteSetup((done)=>{
+        chai.request(server)
+          .get(`/api/threads/${boardTestingReplies}`)
+          .end((err, thread_res) => {
+            console.log(thread_res.body)
+            replies = thread_res.body[0].replies
+            thread_id = thread_res.body[0]._id
+            console.log(replies)
+            done()
+          })
+      })
+      test('posting a reply', (done) => {
+        console.log(replies)
+        assert.equal(replies.length,0)
+        chai.request(server)
+         .post(`/api/replies/${boardTestingReplies}`)
+         .type('form')
+         .send({
+           text:"my first reply",
+           delete_password:"test_pass",
+           thread_id: thread_id
+         })
+         .end((err,post_res)=>{
+          chai.request(server)
+          .get(`/api/threads/${boardTestingReplies}`)
+          .end((err, thread_res) => {
+            console.log(thread_res.body)
+            assert.equal(thread_res.body[0].replies.length,1)//count incremented
+            assert.equal(thread_res.body[0]._id,thread_id)//inserted to same thread
+            assert.equal(thread_res.body[0].replies[0].thread_id,thread_id)//inserted reply to correct thread
+            console.log(thread_res.body[0].replies)
+            done()
+            //replies = thread_res.body[0].replies
+            //thread_id = thread_res.body[0]._id
+            //sconsole.log(replies)
+          })
+         })
+        
+      })
     });
 
     suite('GET', function () {
