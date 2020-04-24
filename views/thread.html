@@ -25,8 +25,9 @@
     <script>
       $(function() {
         var currentURL = window.location.pathname.replace(/^\/b\//,"");
-        currentURL = currentURL.split('/');
         
+        currentURL = currentURL.split('/');
+        console.log(currentURL)
         var url = "/api/replies/"+currentURL[0];
         $('#threadTitle').text(window.location.pathname);
         $.ajax({
@@ -48,6 +49,7 @@
               thread.push('<form id="deleteThread"><input type="hidden" value="'+ele._id+'" name="thread_id" required=""><input type="text" placeholder="password" name="delete_password" required=""><input type="submit" value="Delete"></form>');
               thread.push('<h3>'+ele.text+'</h3>');
               thread.push('</div><div class="replies">');
+
               ele.replies.forEach(function(rep) {
                 thread.push('<div class="reply">')
                 thread.push('<p class="id">id: '+rep._id+' ('+rep.created_on+')</p>');
@@ -56,6 +58,7 @@
                 thread.push('<p>'+rep.text+'</p>');
                 thread.push('</div>')
               });
+
               thread.push('<div class="newReply">')
               thread.push('<form action="/api/replies/'+currentURL[0]+'/" method="post" id="newReply">');
               thread.push('<input type="hidden" name="thread_id" value="'+ele._id+'">');

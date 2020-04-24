@@ -12,5 +12,13 @@ module.exports = mongoose.Schema({
     thread_id:{
         type:mongoose.ObjectId,
         required:true
-    } 
+    },
+    created_on:{
+        type:Date,
+        default: Date.now()
+    },
+    reported:{
+        type:Boolean,
+        default: false
+    }
 })
