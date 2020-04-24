@@ -105,8 +105,7 @@ module.exports = function (app) {
           
         });
     })
-    .put((req, res) => {
-      //console.log(req.body)
+    .put((req, res) => { 
       Thread.updateOne(
         {
           _id: req.body.reported_id,
@@ -119,6 +118,7 @@ module.exports = function (app) {
           res.status(200).json("success");
         }
       );
+      
     })
     .delete((req, res) => {
       //console.log(req.body)
@@ -183,7 +183,35 @@ module.exports = function (app) {
       } else {
         res.status(200).json([]);
       }
+    })
+    
+    .put((req,res)=>{
+      console.log(req.body)
+      if(req.body.thread_id!==undefined && req.body.reply_id){
+        Thread.findById(req.body.thread_id,(err,th)=>{
+          if(th!=null){
+            let replyToReport = th.replies.id(req.body.reply_id)
+            replyToReport.reported = true;
+            th.save((err,replyUpdated)=>{
+              console.log(replyToReport)
+              if(replyUpdated!=null){
+                res.status(200).json("success") 
+              }
+            else{
+              res.status(200).json("Reply Update failed") 
+            }
+            })
+          }else{
+            res.status(200).json("Thread does not exist") 
+          }
+        })
+      }
+      else{
+        res.status(200).json("reply or thread id were not provided")
+      }
     });
+
+
 }; //end top suite
 
 //? 4 I can POST a thread to a specific message board by passing form data text and delete_password to /api/threads/{board}.(Recomend res.redirect to board page /b/{board}) Saved will be _id, text, created_on(date&time), bumped_on(date&time, starts same as created_on), reported(boolean), delete_password, & replies(array).
