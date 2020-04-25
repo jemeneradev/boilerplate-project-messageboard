@@ -316,68 +316,156 @@ suite("Functional Tests", function () {
       let put_board_thread;
       let beforeReplyCount;
       suiteSetup((done) => {
-        chai.request(server)
+        chai
+          .request(server)
           .post(`/api/threads/${put_board}`)
           .type("form")
           .send({
             text: `puttest`,
-            delete_password: "test_pass"
+            delete_password: "test_pass",
           })
           .end((err, res) => {
             console.log("In Put");
             console.log(put_board);
-            
+
             chai
-            .request(server)
-            .get(`/api/threads/${put_board}`)
-            .end((err, put_res) => {
-              console.log(put_res.body)
-              put_board_thread = put_res.body[0]._id
-              beforeReplyCount = put_res.body[0].replies.length;
-              done();
-            })
+              .request(server)
+              .get(`/api/threads/${put_board}`)
+              .end((err, put_res) => {
+                console.log(put_res.body);
+                put_board_thread = put_res.body[0]._id;
+                beforeReplyCount = put_res.body[0].replies.length;
+                done();
+              });
           });
       });
-    
-      test("updating reply to report", (done) => {
-        chai.request(server)
-        .post(`/api/replies/${put_board}`)
-        .send({
-          text:'reply test',
-          delete_password: 'test_pass',
-          thread_id:put_board_thread
-        })
-        .end((err,res)=>{
-          console.log(res)
-          assert.match(res.redirects[0],new RegExp(`.+\/b\/${put_board}\/${put_board_thread}$`))
-          chai
-            .request(server)
-            .get(`/api/threads/${put_board}`)
-            .end((err, put2_res) => {
-              console.log(put2_res.body[0])
-              assert.equal(put2_res.body[0]._id,put_board_thread)
-              assert.equal(put2_res.body[0].replies.length,beforeReplyCount+1)
-              console.log(put2_res.body[0].replies)
 
-              chai.request(server)
-              .put(`/api/replies/${put_board}`)
-              .send({
-                thread_id:put_board_thread,
-                reply_id:put2_res.body[0].replies[0]._id
-              })
-              .end((put_err,succ_res)=>{
-                assert.equal(succ_res.body,'success')
-                done();
-              })
-             // put_board_thread = put_res.body[0]._id
-             // beforeReplyCount = put_res.body[0].replies.length;
-             // done();
-            }) 
-        })
+      test("updating reply to report", (done) => {
+        chai
+          .request(server)
+          .post(`/api/replies/${put_board}`)
+          .send({
+            text: "reply test",
+            delete_password: "test_pass",
+            thread_id: put_board_thread,
+          })
+          .end((err, res) => {
+            //console.log(res)
+            assert.match(
+              res.redirects[0],
+              new RegExp(`.+\/b\/${put_board}\/${put_board_thread}$`)
+            );
+            chai
+              .request(server)
+              .get(`/api/threads/${put_board}`)
+              .end((err, put2_res) => {
+                console.log(put2_res.body[0]);
+                assert.equal(put2_res.body[0]._id, put_board_thread);
+                assert.equal(
+                  put2_res.body[0].replies.length,
+                  beforeReplyCount + 1
+                );
+                console.log(put2_res.body[0].replies);
+
+                chai
+                  .request(server)
+                  .put(`/api/replies/${put_board}`)
+                  .send({
+                    thread_id: put_board_thread,
+                    reply_id: put2_res.body[0].replies[0]._id,
+                  })
+                  .end((put_err, succ_res) => {
+                    assert.equal(succ_res.body, "success");
+                    done();
+                  });
+                // put_board_thread = put_res.body[0]._id
+                // beforeReplyCount = put_res.body[0].replies.length;
+                // done();
+              });
+          });
       });
     });
 
-    suite("DELETE", function () {});
+    suite("DELETE", function (done) {
+      let del_board = `test${Date.now()}`;
+      let del_board_thread;
+      let beforeReplyCount;
+      suiteSetup((done) => {
+        chai
+          .request(server)
+          .post(`/api/threads/${del_board}`)
+          .type("form")
+          .send({
+            text: `deltest`,
+            delete_password: "test_pass",
+          })
+          .end((err, res) => {
+            console.log("In Delete");
+            //console.log(del_board);
+
+            chai
+              .request(server)
+              .get(`/api/threads/${del_board}`)
+              .end((err, del_res) => {
+                //console.log(del_res.body)
+                del_board_thread = del_res.body[0]._id;
+                beforeReplyCount = del_res.body[0].replies.length;
+                done();
+              });
+          });
+      });
+
+      test("test deleting a reply", (done) => {
+        chai
+          .request(server)
+          .post(`/api/replies/${del_board}`)
+          .send({
+            text: "reply test",
+            delete_password: "test_pass",
+            thread_id: del_board_thread,
+          })
+          .end((err, res) => {
+            //console.log(res)
+            assert.match(
+              res.redirects[0],
+              new RegExp(`.+\/b\/${del_board}\/${del_board_thread}$`)
+            );
+            chai
+              .request(server)
+              .get(`/api/threads/${del_board}`)
+              .end((err, del2_res) => {
+                chai
+                  .request(server)
+                  .delete(`/api/replies/${del_board}`)
+                  .send({
+                    thread_id: del_board_thread,
+                    reply_id: del2_res.body[0].replies[0]._id,
+                    delete_password: "wrong_pass",
+                  })
+                  .end((put_err, succ_res) => {
+                    console.log(succ_res.body);
+                    assert.equal(succ_res.body, "incorrect password");
+                    chai
+                      .request(server)
+                      .delete(`/api/replies/${del_board}`)
+                      .send({
+                        thread_id: del_board_thread,
+                        reply_id: del2_res.body[0].replies[0]._id,
+                        delete_password: "test_pass",
+                      })
+                      .end((put_err, succ_res) => {
+                        console.log(succ_res.body);
+                        assert.equal(succ_res.body, "success");
+                        done()
+                      });
+                  });
+                // put_board_thread = put_res.body[0]._id
+                // beforeReplyCount = put_res.body[0].replies.length;
+                // done();
+              });
+          });
+      });
+    });
   });
 });
 

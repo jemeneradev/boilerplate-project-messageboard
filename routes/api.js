@@ -209,7 +209,34 @@ module.exports = function (app) {
       else{
         res.status(200).json("reply or thread id were not provided")
       }
-    });
+    })
+
+    .delete((req,res)=>{
+      console.log(req.body,req.params)
+      //res.status(200).json('test')
+      Thread.findOne({
+        _id:req.body.thread_id,
+        board:req.params.board,
+        "replies._id":req.body.reply_id,
+        "replies.delete_password":req.body.delete_password},(err,threadFound)=>{
+          if(threadFound===null){
+            res.status(200).json("incorrect password")
+          }
+          else{
+            let replyToDelete = threadFound.replies.id(req.body.reply_id)
+            replyToDelete.remove()
+            threadFound.save((err,threadAfterSaving)=>{
+              console.log("\n\nsaved\n\n",err,threadAfterSaving)
+              if(threadAfterSaving!==null){
+                res.status(200).json('success')
+              }
+              else{
+                res.status(200).json("incorrect password") 
+              }
+            })
+          }
+      })
+    })
 
 
 }; //end top suite
